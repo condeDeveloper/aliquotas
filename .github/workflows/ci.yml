@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.so }}
+
+    # bash nos tres sistemas: no Windows o shell padrao e o PowerShell, e ele
+    # desmonta "-Dexec.args=..." em dois argumentos antes de o Maven ver.
+    defaults:
+      run:
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        so: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Testes
+        run: mvn -B -ntp verify
+
+      - name: Os perfeitos
+        run: mvn -B -ntp -q exec:java -Dexec.args="perfeitos"
+
+      - name: Os pares amigaveis
+        run: mvn -B -ntp -q exec:java -Dexec.args="amigaveis"
+
+      - name: Os ciclos sociaveis
+        run: mvn -B -ntp -q exec:java -Dexec.args="sociaveis"
+
+      - name: No que cada sequencia termina
+        run: mvn -B -ntp -q exec:java -Dexec.args="tipos"
+
+      - name: A resposta em funcao do teto
+        run: mvn -B -ntp -q exec:java -Dexec.args="tetos"
+
+      - name: As conferencias
+        run: mvn -B -ntp -q exec:java -Dexec.args="juiz"
+
+      - name: Relatorios de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-${{ matrix.so }}
+          path: target/surefire-reports
+
+  fundo:
+    # A varredura ate um milhao fica num job proprio, para nao multiplicar o
+    # custo pela matriz de tres sistemas.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Varredura ate um milhao
+        run: mvn -B -ntp -q exec:java -Dexec.args="fundo"
